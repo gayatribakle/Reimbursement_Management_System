@@ -1,0 +1,167 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  FINANCE
+  DIRECTOR
+  EMPLOYEE
+}
+
+enum ExpenseStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum ExpenseCategory {
+  TRAVEL
+  FOOD
+  ACCOMMODATION
+  OFFICE_SUPPLIES
+  MEDICAL
+  TRAINING
+  ENTERTAINMENT
+  UTILITIES
+  OTHER
+}
+
+enum RuleType {
+  SEQUENTIAL
+  PERCENTAGE
+  SPECIFIC
+  HYBRID
+}
+
+enum ApprovalAction {
+  APPROVED
+  REJECTED
+  ESCALATED
+}
+
+model Company {
+  id            String         @id @default(cuid())
+  name          String         @db.VarChar(191)
+  currency      String         @db.VarChar(10)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  users         User[]
+  expenses      Expense[]
+  approvalRules ApprovalRule[]
+}
+
+model User {
+  id                String         @id @default(cuid())
+  companyId         String
+  name              String         @db.VarChar(191)
+  email             String         @unique @db.VarChar(191)
+  passwordHash      String         @db.VarChar(255)
+  role              Role           @default(EMPLOYEE)
+  managerId         String?
+  isManagerApprover Boolean        @default(false)
+  refreshToken      String?        @db.Text
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  company           Company        @relation(fields:[companyId], references:[id], onDelete:Cascade)
+  manager           User?          @relation("Reports", fields:[managerId], references:[id])
+  subordinates      User[]         @relation("Reports")
+  expenses          Expense[]      @relation("SubmittedBy")
+  approvalLogs      ApprovalLog[]
+  approvalSteps     ApprovalStep[] @relation("StepApprover")
+  specificRules     ApprovalRule[] @relation("SpecificApprover")
+  @@index([companyId])
+  @@index([role])
+  @@index([managerId])
+}
+
+model Expense {
+  id               String          @id @default(cuid())
+  employeeId       String
+  companyId        String
+  amount           Decimal         @db.Decimal(12,2)
+  originalCurrency String          @db.VarChar(10)
+  convertedAmount  Decimal         @db.Decimal(12,2)
+  companyCurrency  String          @db.VarChar(10)
+  exchangeRate     Decimal         @db.Decimal(10,6)
+  category         ExpenseCategory
+  description      String          @db.Text
+  date             DateTime
+  receiptPath      String?         @db.VarChar(500)
+  ocrProcessed     Boolean         @default(false)
+  status           ExpenseStatus   @default(PENDING)
+  currentStepIndex Int             @default(0)
+  approvalRuleId   String?
+  rejectionReason  String?         @db.Text
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  employee         User            @relation("SubmittedBy", fields:[employeeId], references:[id], onDelete:Cascade)
+  company          Company         @relation(fields:[companyId], references:[id], onDelete:Cascade)
+  approvalRule     ApprovalRule?   @relation(fields:[approvalRuleId], references:[id])
+  logs             ApprovalLog[]
+  @@index([companyId])
+  @@index([employeeId])
+  @@index([status])
+  @@index([currentStepIndex])
+  @@index([createdAt])
+}
+
+model ApprovalRule {
+  id                  String         @id @default(cuid())
+  companyId           String
+  name                String         @db.VarChar(191)
+  ruleType            RuleType
+  percentageThreshold Int?
+  specificApproverId  String?
+  isDefault           Boolean        @default(false)
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  company             Company        @relation(fields:[companyId], references:[id], onDelete:Cascade)
+  specificApprover    User?          @relation("SpecificApprover", fields:[specificApproverId], references:[id])
+  steps               ApprovalStep[]
+  expenses            Expense[]
+  @@index([companyId])
+  @@unique([companyId, name])
+}
+
+model ApprovalStep {
+  id         String       @id @default(cuid())
+  ruleId     String
+  approverId String
+  stepOrder  Int
+  createdAt  DateTime     @default(now())
+  rule       ApprovalRule @relation(fields:[ruleId], references:[id], onDelete:Cascade)
+  approver   User         @relation("StepApprover", fields:[approverId], references:[id])
+  @@index([ruleId])
+  @@unique([ruleId, stepOrder])
+}
+
+model ApprovalLog {
+  id         String         @id @default(cuid())
+  expenseId  String
+  approverId String
+  action     ApprovalAction
+  comment    String?        @db.Text
+  stepIndex  Int
+  createdAt  DateTime       @default(now())
+  expense    Expense        @relation(fields:[expenseId], references:[id], onDelete:Cascade)
+  approver   User           @relation(fields:[approverId], references:[id])
+  @@index([expenseId])
+  @@index([approverId])
+}
+
+model ExchangeRateCache {
+  id           String   @id @default(cuid())
+  baseCurrency String   @unique @db.VarChar(10)
+  rates        Json
+  fetchedAt    DateTime @default(now())
+  expiresAt    DateTime
+  @@index([expiresAt])
+}

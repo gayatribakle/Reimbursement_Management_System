@@ -1,0 +1,131 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #003d9b;
+  --color-primary-container: #0052cc;
+  --color-surface: #f6faff;
+  --color-surface-container-low: #edf4fc;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container: #e8eff7;
+  --color-surface-container-high: #e2e9f1;
+  --color-surface-container-highest: #dce3eb;
+  --color-on-surface: #151c22;
+  --color-on-surface-variant: #434654;
+  --color-outline: #737685;
+  --color-outline-variant: #c3c6d6;
+  --color-error: #ba1a1a;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+  --color-tertiary: #7b2600;
+  --color-tertiary-container: #a33500;
+  --color-secondary: #4c5d8d;
+  --color-secondary-container: #b6c8fe;
+
+  --font-display: 'Poppins', sans-serif;
+  --font-headline: 'Plus Jakarta Sans', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  
+  --radius-xl: 8px;
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    margin: 0;
+  }
+
+  body {
+    @apply bg-surface text-on-surface font-body antialiased selection:bg-primary selection:text-white;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-headline;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #c3c6d6;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #737685;
+  }
+}
+
+@layer components {
+  /* Glass Gradient CTAs */
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-container px-6 py-3 font-body font-medium text-white transition-all hover:opacity-90 active:scale-[0.98] outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
+  }
+
+  /* Ghost Secondary Button */
+  .btn-ghost {
+    @apply inline-flex items-center justify-center rounded-xl px-4 py-2 font-body font-medium text-primary transition-all hover:bg-surface-container-high active:scale-[0.98] outline-none;
+  }
+
+  /* Inputs — No Border Rule */
+  .input-elevated {
+    @apply w-full rounded-xl bg-surface-container-highest px-4 py-3 font-body text-on-surface outline-none transition-colors placeholder:text-on-surface-variant/70 focus:bg-white focus:ring-2 focus:ring-primary/20;
+  }
+  
+  /* Select Inputs */
+  .select-elevated {
+    @apply w-full rounded-xl bg-surface-container-highest px-4 py-3 font-body text-on-surface outline-none transition-colors focus:bg-white focus:ring-2 focus:ring-primary/20 appearance-none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23737685' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 40px;
+  }
+
+  /* Status Chips */
+  .chip-pending {
+    @apply inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800;
+  }
+  .chip-approved {
+    @apply inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800;
+  }
+  .chip-rejected {
+    @apply inline-flex items-center rounded-full bg-error-container px-2.5 py-0.5 text-xs font-semibold text-on-error-container;
+  }
+
+  /* Universal Cards */
+  .card-elevated {
+    @apply rounded-xl bg-surface-container-lowest p-5;
+    box-shadow: 0 12px 32px -4px rgba(0, 64, 162, 0.06);
+  }
+}
+
+/* Glassmorphism utility for modals / overlays */
+.glass-overlay {
+  @apply bg-surface/80 backdrop-blur-[20px];
+}
+
+/* Safe area for mobile bottom nav */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Animations for modals */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes zoomIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-in {
+  animation: fadeIn 200ms ease-out, zoomIn 200ms ease-out;
+}
